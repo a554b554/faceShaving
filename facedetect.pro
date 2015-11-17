@@ -1,13 +1,11 @@
-QT += core
-QT -= gui
-
 TARGET = facedetect
-CONFIG += console
-CONFIG -= app_bundle
-
-TEMPLATE = app
-
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    preprocessor.cpp \
+    detectobject.cpp
 
 
 LIBS += "/usr/local/lib/*.so"
+
+HEADERS += \
+    preprocessor.h \
+    detectobject.h
