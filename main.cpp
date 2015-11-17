@@ -31,7 +31,6 @@ int main(int argc, char *argv[])
     detectLargestObject(img,faceDetector,r);
     rectangle(img,r,Scalar(0,250,0));
     imshow("r", img);
-
     waitKey(0);
     return 0;
 }
