@@ -16,3 +16,11 @@ std::string fixedLength(int value, int digits) {
     std::reverse(result.begin(), result.end());
     return result;
 }
+
+cv::Mat getImageFrome1DFloatMat(const cv::Mat matrixRow, int height){
+    cv::Mat rectangularMat = matrixRow.reshape(1, height);
+    cv::Mat dst;
+    cv::normalize(rectangularMat, dst, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+
+    return dst;
+}
