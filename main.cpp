@@ -11,6 +11,9 @@ using namespace std;
 
 const string imagebasepath = "../data/image/";
 const string classifierbasepath = "../data/Classifier/haarcascades/";
+const string testingbasepath = "../data/test/testdata1/";
+
+
 //const char *faceCascadeFilename = "lbpcascade_frontalface.xml";     // LBP face detector.
 const string faceCascadeFilename = "haarcascade_frontalface_alt_tree.xml";  // Haar face detector.
 //const string eyeCascadeFilename1 = "haarcascade_lefteye_2splits.xml";   // Best eye detector for open-or-closed eyes.
@@ -24,6 +27,23 @@ const string facealgorithm = "FaceRecognizer.Eigenfaces";
 
 const int faceHeight = 320;
 
+vector<Point> pset;
+
+static bool clicked=false;
+static void onMouse(int event, int x, int y, int, void*){
+    if(event == EVENT_LBUTTONDOWN){
+        clicked = true;
+    }
+    else if(event == EVENT_LBUTTONUP){
+        clicked = false;
+    }
+    if(clicked==false){
+        return;
+    }
+
+    pset.push_back(Point(x,y));
+    cout<<Point(x,y)<<endl;
+}
 
 int main0(int argc, char *argv[])
 {
@@ -97,7 +117,7 @@ int main0(int argc, char *argv[])
                 //imshow("avg",avgface);
                 cout<<valid<<endl;
             }
-           // waitKey(0);
+           // waitKey(0);pic
         }
 
     }
@@ -161,16 +181,60 @@ int main(int argc, char *argv[]){ //load model
         exit(1);
     }
 
+    CascadeClassifier faceCascade;
+    CascadeClassifier eyeCascade1;
+    CascadeClassifier eyeCascade2;
+    faceCascade.load(classifierbasepath + faceCascadeFilename);
+    eyeCascade1.load(classifierbasepath + eyeCascadeFilename1);
+    eyeCascade2.load(classifierbasepath + eyeCascadeFilename2);
+
+
+    namedWindow("origin");
+    setMouseCallback("origin", onMouse);
+
+    //reconstruction
     Mat eigenvectors = model->get<Mat>("eigenvectors");
+    Mat averageFaceRow = model->get<Mat>("mean");
 
-    cout<<"size: "<<eigenvectors.cols<<endl;
-    for(int i = 0; i < min(20,eigenvectors.cols); i++){
-        Mat eigenvector = eigenvectors.col(i).clone();
-        Mat eigenface = getImageFrome1DFloatMat(eigenvector,
-                                                  faceHeight);
-        imshow(format("Eigenface%d",i), eigenface);
+    for(int i = 100; i < 200; i++){
+        Mat img;
+        img = imread(testingbasepath+"313000"+fixedLength(i,4)+".jpg");
+        Rect faceRect;  // Position of detected face.
+        Rect searchedLeftEye, searchedRightEye; // top-left and top-right regions of the face, where eyes were searched.
+        Point leftEye, rightEye;    // Position of the detected eyes.
+        Mat preprocessedFace = getPreprocessedFace(img,
+                                       faceHeight,
+                                       faceCascade,
+                                       eyeCascade1,
+                                       eyeCascade2,
+                                       true,
+                                       &faceRect,
+                                       &leftEye,
+                                       &rightEye,
+                                       &searchedLeftEye,
+                                       &searchedRightEye);
+        if(preprocessedFace.empty()){
+            continue;
+        }
+        while(1){
+            int key = waitKey(1);
+            if(key == 'r'){
+                pset.clear();
+            }
+            else if(key == 'q'){
+                break;
+            }
+            imshow("origin", preprocessedFace);
+        }
+        Mat projection = subspaceProject(eigenvectors, averageFaceRow,
+                                   preprocessedFace.reshape(1,1));
+        Mat reconstructionRow = subspaceReconstruct(eigenvectors,
+                                                    averageFaceRow, projection);
+        reconstructionRow = getImageFrome1DFloatMat(reconstructionRow,faceHeight);
+        imshow("reconstruction", reconstructionRow);
+
+        waitKey(0);
     }
-
 
     waitKey(0);
 
