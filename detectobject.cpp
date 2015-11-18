@@ -86,7 +86,7 @@ void detectObjectsCustom(const Mat &img, CascadeClassifier &cascade, vector<Rect
 // Can use Haar cascades or LBP cascades for Face Detection, or even eye, mouth, or car detection.
 // Input is temporarily shrunk to 'scaledWidth' for much faster detection, since 200 is enough to find faces.
 // Note: detectLargestObject() should be faster than detectManyObjects().
-void detectLargestObject(const Mat &img, CascadeClassifier &cascade, Rect &largestObject, int scaledWidth)
+bool detectLargestObject(const Mat &img, CascadeClassifier &cascade, Rect &largestObject, int scaledWidth)
 {
     // Only search for just 1 object (the biggest in the image).
     int flags = CASCADE_FIND_BIGGEST_OBJECT;// | CASCADE_DO_ROUGH_SEARCH;
@@ -104,10 +104,12 @@ void detectLargestObject(const Mat &img, CascadeClassifier &cascade, Rect &large
     if (objects.size() > 0) {
         // Return the only detected object.
         largestObject = (Rect)objects.at(0);
+        return true;
     }
     else {
         // Return an invalid rect.
         largestObject = Rect(-1,-1,-1,-1);
+        return false;
     }
 }
 
