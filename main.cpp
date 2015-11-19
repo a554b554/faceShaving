@@ -216,18 +216,66 @@ int main(int argc, char *argv[]){ //load model
         if(preprocessedFace.empty()){
             continue;
         }
+        cout<<preprocessedFace.type()<<" "<<eigenvectors.type()<<" "<<averageFaceRow.type()<<endl;
+        Mat maskedFace = preprocessedFace.clone();
+        Mat mask;
+        mask.create(maskedFace.size(), CV_8UC1);
+        mask.setTo(0);
+
         while(1){
             int key = waitKey(1);
-            if(key == 'r'){
+            if((char)key == 'r'){
                 pset.clear();
             }
-            else if(key == 'q'){
+            else if((char)key == 'q'){
                 break;
             }
-            imshow("origin", preprocessedFace);
+            imshow("origin", maskedFace);
+            drawPoints(maskedFace, pset);
+            drawPoints(mask, pset);
+            imshow("mask", mask);
         }
-        Mat projection = subspaceProject(eigenvectors, averageFaceRow,
-                                   preprocessedFace.reshape(1,1));
+        pset.clear();
+        mask = mask.reshape(1,mask.rows*mask.cols);
+
+
+        //mask eigen
+        cout<<"mask row: "<<mask.rows<<endl;
+        int maskregionsize = getmaskedsize(mask);
+        cout<<"mask size: "<<maskregionsize<<endl;
+        Mat maskedeigenvectors(maskregionsize, eigenvectors.cols, eigenvectors.type());
+
+
+        for(int j = 0; j < eigenvectors.cols; j++){
+            vector<double> data;
+            for(int i = 0; i < mask.rows; i++){
+                if(mask.at<uchar>(i) == 0){
+                    data.push_back(eigenvectors.col(j).at<double>(i));
+                }
+            }
+            Mat maskedeigenvector(data, true);
+            maskedeigenvector = maskedeigenvector.reshape(1, data.size());
+            maskedeigenvector.copyTo(maskedeigenvectors.col(j));
+        }
+
+        vector<uchar> imgdata;
+        vector<double> avgdata;
+        for(int i = 0; i < mask.rows; i++){
+            if(mask.at<uchar>(i) == 0){
+                avgdata.push_back(averageFaceRow.at<double>(i));
+                imgdata.push_back(preprocessedFace.at<uchar>(i));
+            }
+        }
+        Mat maskedimg(imgdata,true);
+        Mat maskedavg(avgdata,true);
+        maskedimg = maskedimg.reshape(1,1);
+        maskedavg = maskedavg.reshape(1,1);
+        cout<<maskedeigenvectors.type()<<" "<<maskedimg.type()<<" "<<maskedavg.type()<<endl;
+        Mat projection = subspaceProject(maskedeigenvectors, maskedavg, maskedimg);
+
+
+       // Mat projection = subspaceProject(eigenvectors, averageFaceRow,
+                                   //preprocessedFace.reshape(1,1));
         Mat reconstructionRow = subspaceReconstruct(eigenvectors,
                                                     averageFaceRow, projection);
         reconstructionRow = getImageFrome1DFloatMat(reconstructionRow,faceHeight);

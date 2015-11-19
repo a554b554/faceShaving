@@ -24,3 +24,21 @@ cv::Mat getImageFrome1DFloatMat(const cv::Mat matrixRow, int height){
 
     return dst;
 }
+
+void drawPoints(cv::Mat& src, const std::vector<cv::Point>& pset){
+    for(int i = 0; i < pset.size(); i++){
+        cv::circle(src, pset[i], 4, cv::Scalar(255,255,255),-1);
+    }
+}
+
+int getmaskedsize(const cv::Mat &mask){
+    int count = 0;
+    for(int i = 0; i < mask.rows; i++){
+        for(int j = 0; j < mask.cols; j++){
+            if(mask.at<uchar>(i,j)==0){
+                count++;
+            }
+        }
+    }
+    return count;
+}
